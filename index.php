@@ -8,10 +8,20 @@ if(isset($_GET['benchmark'])) {
     $benchmark = $_GET['benchmark'];
     MongoAdapter::setDb($benchmark);
     
-    // $run = MongoAdapter::createRun();
-    
-    if(isset($_GET['new_run'])) {
+    if(isset($_GET['new_run']) && $_POST['queries']) {
         $run = MongoAdapter::createRun();
+        $queries = explode(';', str_replace("\r", "", trim($_POST['queries'])));
+        foreach($queries as $query) {
+            if($query) {
+                MongoAdapter::getCollection('queries')->insert(array(
+                    'query' => $query,
+                    'run_id' => $run['_id']
+                ));
+            }
+        }
+    }
+    if(isset($_GET['new_run'])) {
+        echo '<form name="new_run" method="POST"><textarea name="queries"></textarea><button type="submit">Save</button></form>';
     }
     if(isset($_GET['run_id'])) {
         $items = MongoAdapter::getCollection('items')->find(array(

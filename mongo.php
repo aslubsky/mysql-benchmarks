@@ -20,8 +20,7 @@ class MongoAdapter {
     }
     
     public static function add($data)
-    { 
-        // access collection
+    {
         $collection = self::$db->items;
         $collection->insert($data);
     }
@@ -39,9 +38,11 @@ class MongoAdapter {
     public static function createRun()
     {
         $collection = self::$db->runs;
-        return $collection->insert(array(
+        $run = array(
             'date' => date('Y-m-d H:i:s')
-        ));
+        );
+        $collection->insert($run);
+        return $run;
     }
 
     public static function listDBs()

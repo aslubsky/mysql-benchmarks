@@ -3,7 +3,7 @@
 define('SITE_DIR', realpath(dirname(__FILE__)));
 
 require_once SITE_DIR.'/mongo.php';
-// require_once SITE_DIR.'/db.php';
+require_once SITE_DIR.'/db.php';
 
 MongoAdapter::setDb(isset($_REQUEST['benchmark']) ? $_REQUEST['benchmark'] : 'default');
 
@@ -13,6 +13,9 @@ class Benchmark {
     
     public function start()
     {
+        $query = MongoAdapter::getCollection('queries')->find(array(
+            $_REQUEST['run_id']
+        ));
         $this->_starTime = microtime(TRUE);
         sleep(5);
     }
