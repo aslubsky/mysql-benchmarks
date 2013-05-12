@@ -5,7 +5,7 @@ define('SITE_DIR', realpath(dirname(__FILE__)));
 require_once SITE_DIR.'/mongo.php';
 // require_once SITE_DIR.'/db.php';
 
-MongoAdapter::setDb(isset($_REQUEST['suite']) ? $_REQUEST['suite'] : 'default');
+MongoAdapter::setDb(isset($_REQUEST['benchmark']) ? $_REQUEST['benchmark'] : 'default');
 
 class Benchmark {
     private $_starTime = null;
@@ -27,7 +27,8 @@ class Benchmark {
         MongoAdapter::add(array(
             'date' => date('Y-m-d H:i:s'),
             'exec_time' => number_format($this->_stopTime - $this->_starTime, 6),
-            'query' => 'test',
+            'run_id' => $_REQUEST['run_id'],
+            'query' => 'test'
         ));
     }
 }

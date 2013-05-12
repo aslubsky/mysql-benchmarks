@@ -31,10 +31,22 @@ class MongoAdapter {
         // self::$memcache->flush();
     }
 
-    public static function getAll()
+    public static function getCollection($collName)
     {
-        $collection = self::$db->items;
-        return $collection->find();
+        return self::$db->{$collName};
+    }
+
+    public static function createRun()
+    {
+        $collection = self::$db->runs;
+        return $collection->insert(array(
+            'date' => date('Y-m-d H:i:s')
+        ));
+    }
+
+    public static function listDBs()
+    {
+        return self::$conn->listDBs();
     }
 }
 
