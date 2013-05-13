@@ -49,6 +49,13 @@ class MongoAdapter {
     {
         return self::$conn->listDBs();
     }
+
+    public static function createDefaultBenchmark()
+    {
+        self::setDb('default');
+        self::$db->createCollection('tmp_collection');
+        self::$db->dropCollection('tmp_collection');
+    }
 }
 
 MongoAdapter::init();

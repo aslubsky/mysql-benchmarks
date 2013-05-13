@@ -8,7 +8,7 @@ if(isset($_GET['benchmark'])) {
     $benchmark = $_GET['benchmark'];
     MongoAdapter::setDb($benchmark);
     
-    if(isset($_GET['new_run']) && $_POST['queries']) {
+    if(isset($_GET['new_run']) && isset($_POST['queries'])) {
         $run = MongoAdapter::createRun();
         $queries = explode(';', str_replace("\r", "", trim($_POST['queries'])));
         foreach($queries as $query) {
@@ -41,7 +41,18 @@ if(isset($_GET['benchmark'])) {
     }
 } else {
     $benchmarks = MongoAdapter::listDBs();
+
+    $hasDefault = false;
+
+
     foreach($benchmarks['databases'] as $benchmark) {
         echo '<a href="?benchmark='.$benchmark['name'].'">'.$benchmark['name'].'</a><br>'."\n";
+        if(!$hasDefault) {
+            $hasDefault = $benchmark['name'] == 'default';
+        }
+    }
+
+    if(!$hasDefault) {
+        MongoAdapter::createDefaultBenchmark();
     }
 }
