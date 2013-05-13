@@ -33,7 +33,7 @@ if(isset($_GET['benchmark'])) {
             'run_id' => $_GET['run_id']
         ));
         if($run->state == 0) {
-            echo 'ab http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$_GET['run_id']."<br\n>";
+            echo 'ab -n 1000 -c 1000 http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$_GET['run_id']."<br\n>";
         }
         $items = MongoAdapter::getCollection('items')->find(array(
             'run_id' => $_GET['run_id']
