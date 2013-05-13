@@ -6,7 +6,7 @@ require_once SITE_DIR.'/mongo.php';
 require_once SITE_DIR.'/db.php';
 
 
-$_REQUEST['run_id'] = '518fe746aeecf93002000003';
+// $_REQUEST['run_id'] = '518fe746aeecf93002000003';
 MongoAdapter::setDb(isset($_REQUEST['benchmark']) ? $_REQUEST['benchmark'] : 'default');
 
 class Benchmark {
@@ -16,17 +16,28 @@ class Benchmark {
     
     public function start()
     {
-        $randomNumber = mt_rand(0, MongoAdapter::getCollection('queries')->count()+1);
-        //findOne({random_field: {$gte: rand()}}) 
-        //http://stackoverflow.com/questions/2824157/random-record-from-mongodb
+        $rand = mt_rand();
+        // echo $rand;
         $query = 
-            MongoAdapter::getCollection('queries')->find(array(
-                'run_id' => $_REQUEST['run_id']
-            ))
-            ->limit(1);
-            // ->skip($randomNumber)
-            // ->next();
-        print_r($query->current());exit('O_o');
+            MongoAdapter::getCollection('queries')->findOne(array(
+                'run_id' => new MongoId($_REQUEST['run_id']),
+                'random' => array(
+                    '$gte' => $rand
+                )
+            ));
+        if(!$query) {
+            $query = 
+                MongoAdapter::getCollection('queries')->findOne(array(
+                    'run_id' => new MongoId($_REQUEST['run_id']),
+                    'random' => array(
+                        '$lte' => $rand
+                    )
+                ));
+        }
+        // if($query['_id'].'' != '51913824aeecf9c80d000003') {
+            // print_r($query['_id']);exit('O_o');
+        // }
+        // exit(' |');
         $this->_starTime = microtime(TRUE);
         $this->_query = $query['query'];
         $isSelect = stripos($this->_query, 'sel') !== false;

@@ -39,7 +39,8 @@ class MongoAdapter {
     {
         $collection = self::$db->runs;
         $run = array(
-            'date' => date('Y-m-d H:i:s')
+            'date' => date('Y-m-d H:i:s'),
+            'state' => 0
         );
         $collection->insert($run);
         return $run;

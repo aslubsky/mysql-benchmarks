@@ -15,7 +15,12 @@ if(isset($_GET['benchmark'])) {
             if($query) {
                 MongoAdapter::getCollection('queries')->insert(array(
                     'query' => $query,
+                    'random' => mt_rand(),
                     'run_id' => $run['_id']
+                ));
+                
+                MongoAdapter::getCollection('queries')->ensureIndex(array(
+                    'random' => true
                 ));
             }
         }
@@ -24,6 +29,12 @@ if(isset($_GET['benchmark'])) {
         echo '<form name="new_run" method="POST"><textarea name="queries"></textarea><button type="submit">Save</button></form>';
     }
     if(isset($_GET['run_id'])) {
+        $run = MongoAdapter::getCollection('runs')->findOne(array(
+            'run_id' => $_GET['run_id']
+        ));
+        if($run->state == 0) {
+            echo 'ab http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$_GET['run_id']."<br\n>";
+        }
         $items = MongoAdapter::getCollection('items')->find(array(
             'run_id' => $_GET['run_id']
         ));
