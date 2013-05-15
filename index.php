@@ -35,13 +35,36 @@ if(isset($_GET['benchmark'])) {
         if($run->state == 0) {
             echo 'ab -n 1000 -c 1000 http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$_GET['run_id']."<br\n>";
         }
+        
+        // $res = MongoAdapter::getCollection('items')->group(
+            // array(
+                // 'query' => true
+            // ),
+            // array(
+                // 'runs_count' => 0
+            // ),
+            // "function (obj, prev) { prev.runs_count++; }",
+            // array('condition' => array('query' => array( '$gt' => 1)))
+        // );
+        // print_r($res);exit;
+        // $items = MongoAdapter::getCollection('items')->find(array(
+            // 'run_id' => $_GET['run_id']
+        // ));
+        // db.users.count( { user_id: { $exists: true } } )
+        
+        
         $items = MongoAdapter::getCollection('items')->find(array(
             'run_id' => $_GET['run_id']
         ));
         
+        $chartDataSet = array();
         foreach($items as $item) {
-            print_r($item);
+            // print_r($item);exit;
+            $chartDataSet []= array(strtotime($item['date']).'000', $item['exec_time']);
         }
+        
+        include 'chart.php';
+        
     } else {
         $runs = MongoAdapter::getCollection('runs')->find();
         foreach($runs as $run) {
