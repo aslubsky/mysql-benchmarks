@@ -20,7 +20,7 @@ class Benchmark {
         // echo $rand;
         $query = 
             MongoAdapter::getCollection('queries')->findOne(array(
-                'run_id' => new MongoId($_REQUEST['run_id']),
+                'set_id' => new MongoId($_REQUEST['set_id']),
                 'random' => array(
                     '$gte' => $rand
                 )
@@ -28,7 +28,7 @@ class Benchmark {
         if(!$query) {
             $query = 
                 MongoAdapter::getCollection('queries')->findOne(array(
-                    'run_id' => new MongoId($_REQUEST['run_id']),
+                    'set_id' => new MongoId($_REQUEST['set_id']),
                     'random' => array(
                         '$lte' => $rand
                     )
@@ -55,7 +55,7 @@ class Benchmark {
     
     public function save()
     {
-        MongoAdapter::add(array(
+        MongoAdapter::getCollection('items')->insert(array(
             'date' => date('Y-m-d H:i:s'),
             'exec_time' => number_format($this->_stopTime - $this->_starTime, 6),
             'run_id' => $_REQUEST['run_id'],

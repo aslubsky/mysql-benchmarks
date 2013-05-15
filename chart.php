@@ -1,16 +1,13 @@
 <script src="js/jquery-1.8.1.js"></script>
 <script src="js/jquery.flot.js"></script>
 
-<div id="chartsWraper">
-    <div id="mainContainer" style="width: 1200px; height: 500px"></div>
-</div>
 
 <script>
     $(function(){
-        function ProfileChart() {
+        $.ProfileChart = function(container) {
             var self = this;
 
-            this.mainContainer = $('#mainContainer');
+            this.mainContainer = container;
             this.mainPlot = null;
             this.data = {};
 
@@ -43,8 +40,18 @@
         }
 
 
-        $.chart = new ProfileChart();
-        $.chart.load(<?php echo json_encode($chartDataSet); ?>);
-        $.chart.plot();
+
     });
 </script>
+<?php
+function makeChart($title, $name, $data) {
+    echo '<h1>'.$title.'</h1><br/>
+    <div id="ch'.$name.'" style="width: 90%; height: 400px"></div>
+    <script>
+    $(function(){
+        $.chart = new $.ProfileChart($("#ch'.$name.'"));
+        $.chart.load('. json_encode($data) .');
+        $.chart.plot();
+    });
+    </script><br/>';
+}?>

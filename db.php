@@ -5,7 +5,7 @@ class DB {
    
     public static function init()
     {
-        self::$conn = new PDO('mysql:host=localhost;dbname=test;', 'root', '');
+        self::$conn = new PDO('mysql:host=localhost;dbname=davintoo_prod;', 'root', '');
         $init = array(
             'SET CHARACTER SET UTF8',
             'SET character_set_client = "utf8"',
