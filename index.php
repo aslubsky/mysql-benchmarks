@@ -16,9 +16,13 @@ if(isset($_GET['benchmark'])) {
             'date' => date('Y-m-d H:i:s')
         );
         MongoAdapter::getCollection('runs')->insert($run);
+        $cont = isset($_GET['count']) ? (int)$_GET['count'] : 100000;
 //        echo '/usr/bin/ab -n 100 -c 100 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$run['_id'].'"';exit;
         //echo '<pre>'.
-            shell_exec('/usr/bin/ab -n 100000 -c 500 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id'].'"');//.'</pre>';exit;
+//        for($i=100; $i<1000000; $i *= 10) {
+            $url = sprintf('/usr/bin/ /usr/bin/ab -n %d -c %d "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id'].'"', $cont, 1000);
+            shell_exec($url);//.'</pre>';exit;
+//        }
         header('Location: index.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id']);
         exit;
     }
