@@ -23,6 +23,11 @@ class MongoAdapter {
     {
         return self::$db->{$collName};
     }
+    
+    public static function getDb()
+    {
+        return self::$db;
+    }
 
     public static function listDBs()
     {

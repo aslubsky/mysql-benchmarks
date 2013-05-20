@@ -48,7 +48,7 @@ if(isset($_GET['benchmark'])) {
     MongoAdapter::setDb($benchmark);
 
     if(isset($_GET['new_run'])) {
-        echo 'Z:\usr\local\apache\bin\ab.exe -n 1000 -c 100 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'"';exit;
+        echo 'ab -n 10000 -c 100 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'"';exit;
         //echo '<pre>'.
             shell_exec('/usr/bin/ab -n 100000 -c 500 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id'].'"');//.'</pre>';exit;
         header('Location: index.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id']);
@@ -87,6 +87,43 @@ if(isset($_GET['benchmark'])) {
         SQL file: <input type="file" name="queries_file"/> <br/><button type="submit">Save</button></form>';
     }
     if(isset($_GET['set_id'])) {
+        // $events->insert(array("user_id" => $id, 
+            // "type" => $type, 
+            // "time" => new MongoDate(), 
+            // "desc" => $description));
+
+        // construct map and reduce functions
+        $map = new MongoCode("function() { emit(this.date, this.exec_time); }");
+        $reduce = new MongoCode("function(k, vals) { ".
+            "var queriesCountPerTime = {};".
+            "for (var i in vals) {".
+                "if (queriesCountPerTime(vals[i].date) == undefined) {".
+                    "queriesCountPerTime(vals[i].date);".
+                "}".
+                "queriesCountPerTime(vals[i].date)++". 
+            "}".
+            "return queriesCountPerTime; }");
+
+        $sales = MongoAdapter::getDb()->command(array(
+            "mapreduce" => "items", 
+            "map" => $map,
+            "reduce" => $reduce,
+            "query" => array("set_id" => $_GET['set_id']),
+             "out" => array("merge" => "eventCounts")
+        ));
+        print_r($sales);exit;
+
+        $res = MongoAdapter::getDb()->selectCollection($sales['result'])->find();
+
+        foreach ($res as $itm) {
+            print_r($itm);
+        }
+        exit;
+        
+        
+        
+        
+        
         $items = MongoAdapter::getCollection('items')->find(array(
             'set_id' => $_GET['set_id'],
             'type' => 1
@@ -111,7 +148,8 @@ if(isset($_GET['benchmark'])) {
         ));
         $deleteSet = calc($items);
         
-//        print_r($avgTimeDataSet);exit;
+//        print_r($avgTimeDataSet);
+
         
         include 'chart.php';
         // makeChart('Test', 'Test', $tmpDataSet);
