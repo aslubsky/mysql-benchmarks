@@ -6,7 +6,6 @@ require_once SITE_DIR.'/mongo.php';
 require_once SITE_DIR.'/db.php';
 
 
-// $_REQUEST['run_id'] = '518fe746aeecf93002000003';
 MongoAdapter::setDb(isset($_REQUEST['benchmark']) ? $_REQUEST['benchmark'] : 'default');
 
 class Benchmark {
@@ -14,37 +13,27 @@ class Benchmark {
     private $_stopTime = null;
     private $_query = null;
     
+    public function run($setId, $runId)
+    {
+        $queries = MongoAdapter::getCollection('queries')->find(array(
+            'set_id' => new MongoId($setId)
+        ));
+        foreach($queries as $query) {
+            $this->_query = $query;
+            $this->start();
+            $this->stop();
+            $this->save($setId);
+        }
+    }
+    
     public function start()
     {
-        $rand = mt_rand();
-        // echo $rand;
-        $query = 
-            MongoAdapter::getCollection('queries')->findOne(array(
-                'set_id' => new MongoId($_REQUEST['set_id']),
-                'random' => array(
-                    '$gte' => $rand
-                )
-            ));
-        if(!$query) {
-            $query = 
-                MongoAdapter::getCollection('queries')->findOne(array(
-                    'set_id' => new MongoId($_REQUEST['set_id']),
-                    'random' => array(
-                        '$lte' => $rand
-                    )
-                ));
-        }
-        // if($query['_id'].'' != '51913824aeecf9c80d000003') {
-            // print_r($query['_id']);exit('O_o');
-        // }
-        // exit(' |');
         $this->_starTime = microtime(TRUE);
-        $this->_query = $query['query'];
-        $isSelect = stripos($this->_query, 'sel') !== false;
+        $isSelect = stripos($this->_query['query'], 'sel') !== false;
         if($isSelect) {
-            DB::fetchAll($this->_query);
+            DB::fetchAll($this->_query['query']);
         } else {
-            DB::exec($this->_query);
+            DB::exec($this->_query['query']);
         }
     }
     
@@ -53,18 +42,30 @@ class Benchmark {
         $this->_stopTime = microtime(TRUE);
     }
     
-    public function save()
+    public function save($setId)
     {
+        $type = 0;
+        if(stripos($this->_query['query'], 'sel') !== false) {
+            $type = 1;
+        }
+        if(stripos($this->_query['query'], 'upd') !== false) {
+            $type = 2;
+        }
+        if(stripos($this->_query['query'], 'ins') !== false) {
+            $type = 3;
+        }
+        if(stripos($this->_query['query'], 'del') !== false) {
+            $type = 4;
+        }
         MongoAdapter::getCollection('items')->insert(array(
             'date' => date('Y-m-d H:i:s'),
             'exec_time' => number_format($this->_stopTime - $this->_starTime, 6),
-            'run_id' => $_REQUEST['run_id'],
-            'query' => $this->_query
+            'set_id' => $setId,
+            'query' => $this->_query['_id'],
+            'type' => $type
         ));
     }
 }
 
 $b = new Benchmark();
-$b->start();
-$b->stop();
-$b->save();
+$b->run($_REQUEST['set_id']);

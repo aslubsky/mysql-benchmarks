@@ -6,17 +6,49 @@ define('SITE_DIR', realpath(dirname(__FILE__)));
 
 require_once SITE_DIR.'/mongo.php';
 
+function calc($items) {
+    $queriesCountPerTime = array();
+    $queriesPerTime = array();
+    foreach($items as $item) {
+        // print_r($item);exit;
+        $ts = strtotime(date('Y-m-d H:i', strtotime($item['date'])));
+        if(!isset($queriesCountPerTime[$ts])) {
+            $queriesCountPerTime[$ts] = 0;
+            $queriesPerTime[$ts] = array();
+        }
+        $queriesCountPerTime[$ts]++;
+        $queriesPerTime[$ts] []= $item['exec_time'];
+    }
+
+    // $speedDataSet = array();
+    // foreach($queriesCountPerTime as $date => $cnt) {
+        // print_r($item);exit;
+        // $speedDataSet []= array(strtotime($date).'000', $cnt);
+    // }
+    ksort($queriesPerTime);
+    
+    $tmp = array();
+    $avgTimeDataSet = array();
+    foreach($queriesPerTime as $ts => $times) {
+//            print_r($times);exit;
+        $count = count($times);
+        $sum = 0;
+        foreach($times as $time) {
+            $sum += $time;
+        }
+        // print_r($item);exit;
+        $avgTimeDataSet []= array($ts.'000', $sum/$count);
+        // $tmp [$queriesCountPerTime[$date]] = $sum/$count;
+    }
+    return $avgTimeDataSet;
+}
+
 if(isset($_GET['benchmark'])) {
     $benchmark = $_GET['benchmark'];
     MongoAdapter::setDb($benchmark);
 
     if(isset($_GET['new_run'])) {
-        $run = array(
-            'set_id' => $_GET['set_id'],
-            'date' => date('Y-m-d H:i:s')
-        );
-        MongoAdapter::getCollection('runs')->insert($run);
-//        echo '/usr/bin/ab -n 100 -c 100 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&run_id='.$run['_id'].'"';exit;
+        echo 'Z:\usr\local\apache\bin\ab.exe -n 1000 -c 100 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'"';exit;
         //echo '<pre>'.
             shell_exec('/usr/bin/ab -n 100000 -c 500 "http://local.mysql-benchmarks.ua/test.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id'].'"');//.'</pre>';exit;
         header('Location: index.php?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id']);
@@ -54,74 +86,54 @@ if(isset($_GET['benchmark'])) {
         echo '<form enctype="multipart/form-data" name="new_set" method="POST">Set name: <input type="text" name="set_name"/> <br/>
         SQL file: <input type="file" name="queries_file"/> <br/><button type="submit">Save</button></form>';
     }
-    if(isset($_GET['run_id'])) {
-        $run = MongoAdapter::getCollection('runs')->findOne(array(
-            'run_id' => $_GET['run_id']
+    if(isset($_GET['set_id'])) {
+        $items = MongoAdapter::getCollection('items')->find(array(
+            'set_id' => $_GET['set_id'],
+            'type' => 1
         ));
-        // $res = MongoAdapter::getCollection('items')->group(
-            // array(
-                // 'query' => true
-            // ),
-            // array(
-                // 'runs_count' => 0
-            // ),
-            // "function (obj, prev) { prev.runs_count++; }",
-            // array('condition' => array('query' => array( '$gt' => 1)))
-        // );
-        // print_r($res);exit;
-        // $items = MongoAdapter::getCollection('items')->find(array(
-            // 'run_id' => $_GET['run_id']
-        // ));
-        // db.users.count( { user_id: { $exists: true } } )
-        
+        $selectSet = calc($items);
         
         $items = MongoAdapter::getCollection('items')->find(array(
-            'run_id' => $_GET['run_id']
+            'set_id' => $_GET['set_id'],
+            'type' => 2
         ));
-
-        $queriesCountPerTime = array();
-        $queriesPerTime = array();
-        foreach($items as $item) {
-            // print_r($item);exit;
-            if(!isset($queriesCountPerTime[$item['date']])) {
-                $queriesCountPerTime[$item['date']] = 0;
-                $queriesPerTime[$item['date']] = array();
-            }
-            $queriesCountPerTime[$item['date']]++;
-            $queriesPerTime[$item['date']] []= $item['exec_time'];
-        }
-
-        $speedDataSet = array();
-        foreach($queriesCountPerTime as $date => $cnt) {
-            // print_r($item);exit;
-            $speedDataSet []= array(strtotime($date).'000', $cnt);
-        }
-
-        $avgTimeDataSet = array();
-        foreach($queriesPerTime as $date => $times) {
-//            print_r($times);exit;
-            $count = count($times);
-            $sum = 0;
-            foreach($times as $time) {
-                $sum += $time;
-            }
-            // print_r($item);exit;
-            $avgTimeDataSet []= array(strtotime($date).'000', $sum/$count);
-        }
+        $updateSet = calc($items);
+        
+        $items = MongoAdapter::getCollection('items')->find(array(
+            'set_id' => $_GET['set_id'],
+            'type' => 3
+        ));
+        $insertSet = calc($items);
+        
+        $items = MongoAdapter::getCollection('items')->find(array(
+            'set_id' => $_GET['set_id'],
+            'type' => 4
+        ));
+        $deleteSet = calc($items);
+        
 //        print_r($avgTimeDataSet);exit;
         
         include 'chart.php';
-        makeChart('Queries per sec', 'speed', $speedDataSet);
-        makeChart('Average execution time (in sec)', 'avgTime', $avgTimeDataSet);
-
-    }
-    if(isset($_GET['set_id'])) {
-        $runs = MongoAdapter::getCollection('runs')->find(array(
-            'set_id' => $_GET['set_id']
+        // makeChart('Test', 'Test', $tmpDataSet);
+        // makeChart('Queries per sec', 'speed', $speedDataSet);
+        makeChart('Average execution time (in sec)', 'avgTime', array(
+            array(
+                'label' => 'SELECT',
+                'data' => $selectSet
+            ),
+             array(
+                 'label' => 'UPDATE',
+                 'data' => $updateSet
+            ),          
+            array(
+                'label' => 'INSERT',
+                'data' => $insertSet
+            ),           
+            array(
+                'label' => 'DELETE',
+                'data' => $deleteSet
+            )
         ));
-        foreach($runs as $run) {
-            echo '<a href="?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&run_id='.$run['_id'].'">'.$run['date'].'</a><br>'."\n";
-        }
 
         echo '<a href="?benchmark='.$benchmark.'&set_id='.$_GET['set_id'].'&new_run=true">Run</a><br>'."\n";
     } else {
@@ -148,4 +160,4 @@ if(isset($_GET['benchmark'])) {
     if(!$hasDefault) {
         MongoAdapter::createDefaultBenchmark();
     }
-}
+};

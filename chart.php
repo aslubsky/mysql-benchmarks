@@ -19,7 +19,7 @@
             this.plot = function() {
                 var options = {
                     legend: {
-                        show:false
+                        // show:false
                     },
                     grid: {
                         autoHighlight: true
@@ -33,7 +33,7 @@
                 self.mainContainer.empty();
                 self.mainPlot = $.plot(
                     self.mainContainer,
-                    [self.data],
+                    self.data,
                     options
                 );
             }
